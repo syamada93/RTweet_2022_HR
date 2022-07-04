@@ -213,13 +213,18 @@ server <- function(input, output) {
     
     TFSS <-
       fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
+      filter(Purl %in% TDPC0$Purl)
+      # filter(status_id %in% TDPC0$RID)
+    if(sort==2)
+    TFSS <-
+      fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
       # filter(Purl %in% TDPC0$Purl)
-      filter(status_id %in% TDPC0$RID)
+    filter(status_id %in% TDPC0$RID)
     
     TFSC <-
       TFSS %>%
       distinct(status_id,Tweet,JTime,RID,RTime,word1,word2,total1,total2) %>%
-      distinct(Tweet,word1,word2,.keep_all = T) %>%
+      # distinct(Tweet,word1,word2,.keep_all = T) %>%
       group_by(word1,word2,total1,total2) %>%
       summarise(n=n(),mid=min(RID)) %>%
       mutate(rate1=n/total1) %>%
@@ -339,7 +344,7 @@ server <- function(input, output) {
               select(word=word2,freq=n,Cluster=Topic)) %>%
         distinct() %>%
         group_by(word) %>%
-        mutate(n=max(freq)) %>%
+        mutate(n=max(freq,na.rm = T)) %>%
         ungroup() %>%
         distinct(word,n,.keep_all = T) %>%
         arrange(desc(n)) %>%
