@@ -219,7 +219,8 @@ server <- function(input, output) {
     TFSS <-
       fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
       # filter(Purl %in% TDPC0$Purl)
-    filter(status_id %in% TDPC0$RID)
+      # filter(status_id %in% TDPC0$RID)
+      distinct(RID,word,.keep_all = T)
     
     TFSC <-
       TFSS %>%
