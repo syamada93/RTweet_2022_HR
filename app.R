@@ -220,7 +220,19 @@ server <- function(input, output) {
       fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
       # filter(Purl %in% TDPC0$Purl)
       # filter(status_id %in% TDPC0$RID)
-      distinct(RID,word,.keep_all = T)
+      distinct(RID,word,.keep_all = T) %>%
+      filter(!N1=="大雨") %>%
+      group_by(N1) %>%
+      mutate(total=n()) %>%
+      group_by(ID) %>%
+      mutate(word1=N1) %>%
+      mutate(total1=total) %>%
+      mutate(word2=lead(word1)) %>%
+      mutate(total2=lead(total1)) %>%
+      mutate(POS12=lead(POS1)) %>%
+      mutate(POS22=lead(POS2)) %>%
+      mutate(word=paste0(word1,word2)) %>%
+      ungroup()
     
     TFSC <-
       TFSS %>%
