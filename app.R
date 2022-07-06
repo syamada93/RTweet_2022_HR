@@ -107,7 +107,7 @@ server <- function(input, output) {
   refreshPlot0 <- reactiveTimer(intervalMs = 120000)
   
   # wd="大雨"
-  sort=1
+  sort=2
  
   observe({
     refreshPlot0()
