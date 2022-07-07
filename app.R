@@ -107,7 +107,7 @@ server <- function(input, output) {
   refreshPlot0 <- reactiveTimer(intervalMs = 120000)
   
   # wd="大雨"
-  sort=1
+  sort=2
  
   observe({
     refreshPlot0()
@@ -251,14 +251,16 @@ server <- function(input, output) {
       mutate(Rankd=frank(-n,ties.method = "dense")) %>%
       arrange(Rank) %>%
       mutate(word=paste0(word1,word2),drow=ifelse(total1>total2,paste0(word1,word2),paste0(word2,word1))) %>%
-      arrange(Rank,desc(rate1),desc(total1))
+      arrange(Rank,desc(rate1),desc(total1)) %>%
+      ungroup()
     
     TFSC0 <-
       TFSC %>%
       filter(total1>1) %>%
       filter(total2>1) %>%
-      mutate(Rank=ifelse(sort==2,frank(-rate1,ties.method = "min"),Rank)) %>%
-      mutate(no=1:n()) %>%
+      mutate(rRank=frank(-rate1,ties.method = "min")) %>%
+      mutate(Rank=ifelse(rep(sort,n())==2,rRank,Rank)) %>%
+      # mutate(no=1:n()) %>%
       # group_by(drow) %>%
       filter(Rank<=50) %>%
       ungroup()
