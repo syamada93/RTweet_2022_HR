@@ -107,7 +107,7 @@ server <- function(input, output) {
   refreshPlot0 <- reactiveTimer(intervalMs = 120000)
   
   # wd="大雨"
-  sort=2
+  sort=1
  
   observe({
     refreshPlot0()
@@ -218,21 +218,22 @@ server <- function(input, output) {
     if(sort==2)
     TFSS <-
       fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
+      # FSS %>%
       # filter(Purl %in% TDPC0$Purl)
-      # filter(status_id %in% TDPC0$RID)
-      distinct(RID,word,.keep_all = T) %>%
-      filter(!N1=="大雨") %>%
-      group_by(N1) %>%
-      mutate(total=n()) %>%
-      group_by(ID) %>%
-      mutate(word1=N1) %>%
-      mutate(total1=total) %>%
-      mutate(word2=lead(word1)) %>%
-      mutate(total2=lead(total1)) %>%
-      mutate(POS12=lead(POS1)) %>%
-      mutate(POS22=lead(POS2)) %>%
-      mutate(word=paste0(word1,word2)) %>%
-      ungroup()
+      filter(status_id %in% TDPC0$RID)
+      # distinct(RID,word,.keep_all = T) %>%
+      # # filter(!N1=="大雨") %>%
+      # group_by(N1) %>%
+      # mutate(total=n()) %>%
+      # group_by(ID) %>%
+      # mutate(word1=N1) %>%
+      # mutate(total1=total) %>%
+      # mutate(word2=lead(word1)) %>%
+      # mutate(total2=lead(total1)) %>%
+      # mutate(POS12=lead(POS1)) %>%
+      # mutate(POS22=lead(POS2)) %>%
+      # mutate(word=paste0(word1,word2)) %>%
+      # ungroup()
     
     TFSC <-
       TFSS %>%
@@ -250,12 +251,15 @@ server <- function(input, output) {
       mutate(Rankd=frank(-n,ties.method = "dense")) %>%
       arrange(Rank) %>%
       mutate(word=paste0(word1,word2),drow=ifelse(total1>total2,paste0(word1,word2),paste0(word2,word1))) %>%
-      arrange(Rank,desc(total1),desc(total2))
+      arrange(Rank,desc(rate1),desc(total1))
     
     TFSC0 <-
       TFSC %>%
-      filter(n>1) %>%
-      group_by(drow) %>%
+      filter(total1>1) %>%
+      filter(total2>1) %>%
+      mutate(Rank=ifelse(sort==2,frank(-rate1,ties.method = "min"),Rank)) %>%
+      mutate(no=1:n()) %>%
+      # group_by(drow) %>%
       filter(Rank<=50) %>%
       ungroup()
     
@@ -309,7 +313,8 @@ server <- function(input, output) {
       ungroup() %>%
       mutate(Stime=as.POSIXct(paste(Year,Month,Day,Hour),format="%Y %m %d %H"))
     
-    if(sort==1){
+    # if(sort==1)
+    {
       TFSS3 <-
         TFSS2 %>%
         distinct(status_id,word1,word2,.keep_all = T) %>%
@@ -391,104 +396,87 @@ server <- function(input, output) {
                edge_width = F,
                edge_alpha = F))
     }
-    if(sort==2){
-      TFSS3 <-
-        TFSS2 %>%
-        distinct(status_id,word1,word2,.keep_all = T) %>%
-        count(word1,word2,n,nn,Rank,rate,Topic,tw1,tw2,tn) %>%
-        arrange(Rank,desc(tn)) %>%
-        group_by(Topic) %>%
-        mutate(tn2=n()) %>%
-        # select(tw1,tw2,one_of(colnames(TFSS2))) %>%
-        ungroup()
-      TFSS4 <-
-        TFSS3 %>%
-        group_by(word1,word2,Topic) %>%
-        mutate(wc11=sum(tw1 %in% TFSS3$tw1)) %>%
-        mutate(wc12=sum(tw1 %in% TFSS3$tw2)) %>%
-        mutate(wc21=sum(tw2 %in% TFSS3$tw1)) %>%
-        mutate(wc22=sum(tw2 %in% TFSS3$tw2)) %>%
-        filter(wc12>0|wc21>0) %>%
-        arrange(desc(tn2)) %>%
-        select(word1,word2,one_of(colnames(.))) %>%
-        distinct(word1,word2,.keep_all = T) %>%
-        ungroup()
-      
-      # TFSS_topic <-
-      #   data.frame() %>%
-      #   rbind(TFSS2 %>%
-      #           select(word=tw1,freq=Ttw1,Cluster=Topic)) %>%
-      #   rbind(TFSS2 %>%
-      #           select(word=tw2,freq=Ttw2,Cluster=Topic)) %>%
-      #   distinct() %>%
-      #   group_by(word) %>%
-      #   mutate(n=max(freq)) %>%
-      #   ungroup() %>%
-      #   distinct(word,n,.keep_all = T) %>%
-      #   arrange(desc(n)) %>%
-      #   mutate(Cluster=factor(Cluster)) %>%
-      #   mutate(word=gsub("_[[:digit:]]","",word))%>%
-      #   distinct(word,.keep_all = T) %>%
-      #   ungroup()
-      
-      TFSS_topic <-
-        data.frame() %>%
-        rbind(TFSS4 %>%
-                select(word=word1,freq=n,Cluster=Topic)) %>%
-        rbind(TFSS4 %>%
-                select(word=word2,freq=n,Cluster=Topic)) %>%
-        distinct() %>%
-        group_by(word) %>%
-        mutate(n=max(freq,na.rm = T)) %>%
-        ungroup() %>%
-        distinct(word,n,.keep_all = T) %>%
-        arrange(desc(n)) %>%
-        mutate(Cluster=factor(Cluster)) %>%
-        # mutate(word=gsub("_[[:digit:]]","",word))%>%
-        distinct(word,.keep_all = T) %>%
-        ungroup()
-      
-      g <- as_tbl_graph(TFSS4, directed = T) %>%
-        left_join(TFSS_topic,by=c("name"="word")) %>%
-        ungroup()
-      
-      G <- data.frame(g) %>%
-        mutate(Cluster=as.numeric(as.character(Cluster))) %>%
-        mutate(word=name) %>%
-        # left_join(TFSS4 %>% distinct(tw1,word1),by=c("name"="tw1")) %>%
-        # left_join(TFSS4 %>% distinct(tw2,word2),by=c("name"="tw2")) %>%
-        # mutate(word=ifelse(!is.na(word1),word1,word2)) %>%
-        # mutate(word=iconv(word,"CP932","UTF-8")) %>%
-        ungroup()
-      
-      mn=max(G$n)
-      keta=floor(log10(mn))-1
-      fn=mn/11/10^keta
-      ziku=ifelse(fn<5,5*10^(keta),10^(keta+1))
-      al=c(min(TFSS4$rate),max(TFSS4$rate))
-      es=min(TFSS4$nn)/max(TFSS4$nn)*3
-      cs=min(G$n)/max(G$n)*20
-      
-      (p2<-
-          g %>%
-          ggraph(layout ="nicely") +
-          geom_node_point(aes(size = n),col=ggColorHue(min(k,10))[G$Cluster]) +
-          geom_edge_link(aes(width = nn, alpha = rate),color="#0F0F0F", #
-                         arrow = arrow(length = unit(5,'mm')), end_cap = circle(7,'mm'),force_flip = F) +
-          geom_node_text(aes(),label = G$word, repel = F, size=10) +
-          ggtitle(paste0("「大雨」を含む画像付きツイートの要約共起ネットワーク\n",min(TDPC$JTime),"~",max(TDPC$JTime)," ",length(unique(G$word)),"単語")) + #,k,"ツイート　","\n",nrow(TFS00),"ルール"
-          theme_graph(title_size = 30) +
-          scale_edge_alpha(range = c(0.1,1)) +
-          scale_edge_width(range = c(es,3)) +
-          scale_size_continuous(range = c(cs,20+cs),breaks = seq(0,mn,ziku)) + #,breaks = seq(0,floor(mn/keta)*keta,by = keta)
-          theme( legend.text =  element_text(size = 30), # 凡例
-                 legend.title = element_text(face = "bold", size = 10, hjust = 0)) +
-          guides(alpha = guide_legend(title = "LEFT", title.position = "left")) +
-          guides(colour = guide_legend(order=1 , override.aes = list(size=10)),
-                 size   = F, #guide_legend(order=2)
-                 edge_width = F,
-                 edge_alpha = F))
-    }
+    # if(sort==2){
+    #   TFSS3 <-
+    #     TFSS2 %>%
+    #     distinct(status_id,word1,word2,.keep_all = T) %>%
+    #     count(word1,word2,n,nn,Rank,rate,Topic,tw1,tw2,tn) %>%
+    #     arrange(Rank,desc(tn)) %>%
+    #     group_by(Topic) %>%
+    #     mutate(tn2=n()) %>%
+    #     # select(tw1,tw2,one_of(colnames(TFSS2))) %>%
+    #     ungroup()
+    #   TFSS4 <-
+    #     TFSS3 %>%
+    #     group_by(word1,word2,Topic) %>%
+    #     mutate(wc11=sum(tw1 %in% TFSS3$tw1)) %>%
+    #     mutate(wc12=sum(tw1 %in% TFSS3$tw2)) %>%
+    #     mutate(wc21=sum(tw2 %in% TFSS3$tw1)) %>%
+    #     mutate(wc22=sum(tw2 %in% TFSS3$tw2)) %>%
+    #     filter(wc12>0|wc21>0) %>%
+    #     arrange(desc(tn2)) %>%
+    #     select(word1,word2,one_of(colnames(.))) %>%
+    #     distinct(word1,word2,.keep_all = T) %>%
+    #     ungroup()
+    #   
+    #   TFSS_topic <-
+    #     data.frame() %>%
+    #     rbind(TFSS4 %>%
+    #             select(word=word1,freq=n,Cluster=Topic)) %>%
+    #     rbind(TFSS4 %>%
+    #             select(word=word2,freq=n,Cluster=Topic)) %>%
+    #     distinct() %>%
+    #     group_by(word) %>%
+    #     mutate(n=max(freq,na.rm = T)) %>%
+    #     ungroup() %>%
+    #     distinct(word,n,.keep_all = T) %>%
+    #     arrange(desc(n)) %>%
+    #     mutate(Cluster=factor(Cluster)) %>%
+    #     # mutate(word=gsub("_[[:digit:]]","",word))%>%
+    #     distinct(word,.keep_all = T) %>%
+    #     ungroup()
+    #   
+    #   g <- as_tbl_graph(TFSS4, directed = T) %>%
+    #     left_join(TFSS_topic,by=c("name"="word")) %>%
+    #     ungroup()
+    #   
+    #   G <- data.frame(g) %>%
+    #     mutate(Cluster=as.numeric(as.character(Cluster))) %>%
+    #     mutate(word=name) %>%
+    #     # left_join(TFSS4 %>% distinct(tw1,word1),by=c("name"="tw1")) %>%
+    #     # left_join(TFSS4 %>% distinct(tw2,word2),by=c("name"="tw2")) %>%
+    #     # mutate(word=ifelse(!is.na(word1),word1,word2)) %>%
+    #     # mutate(word=iconv(word,"CP932","UTF-8")) %>%
+    #     ungroup()
+    #   
+    #   mn=max(G$n)
+    #   keta=floor(log10(mn))-1
+    #   fn=mn/11/10^keta
+    #   ziku=ifelse(fn<5,5*10^(keta),10^(keta+1))
+    #   al=c(min(TFSS4$rate),max(TFSS4$rate))
+    #   es=min(TFSS4$nn)/max(TFSS4$nn)*3
+    #   cs=min(G$n)/max(G$n)*10
+    #   
+    #   (p2<-
+    #       g %>%
+    #       ggraph(layout ="nicely") +
+    #       geom_node_point(aes(size = n),col=ggColorHue(min(k,10))[G$Cluster]) +
+    #       geom_edge_link(aes(width = nn, alpha = rate),color="#0F0F0F", #
+    #                      arrow = arrow(length = unit(5,'mm')), end_cap = circle(7,'mm'),force_flip = F) +
+    #       geom_node_text(aes(),label = G$word, repel = F, size=10) +
+    #       ggtitle(paste0("「大雨」を含む画像付きツイートの要約共起ネットワーク\n",min(TDPC$JTime),"~",max(TDPC$JTime)," ",length(unique(G$word)),"単語")) + #,k,"ツイート　","\n",nrow(TFS00),"ルール"
+    #       theme_graph(title_size = 30) +
+    #       scale_edge_alpha(range = c(0.1,1)) +
+    #       scale_edge_width(range = c(es,3)) +
+    #       scale_size_continuous(range = c(cs,10+cs),breaks = seq(0,mn,ziku)) + #,breaks = seq(0,floor(mn/keta)*keta,by = keta)
+    #       theme( legend.text =  element_text(size = 30), # 凡例
+    #              legend.title = element_text(face = "bold", size = 10, hjust = 0)) +
+    #       guides(alpha = guide_legend(title = "LEFT", title.position = "left")) +
+    #       guides(colour = guide_legend(order=1 , override.aes = list(size=10)),
+    #              size   = F, #guide_legend(order=2)
+    #              edge_width = F,
+    #              edge_alpha = F))
+    # }
     
     output$ggraph <- renderPlot({
       plot(p2)
