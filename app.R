@@ -212,12 +212,12 @@ server <- function(input, output) {
     })
     
     TFSS <-
-      fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
+      fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv",encoding = "UTF-8") %>%
       filter(Purl %in% TDPC0$Purl)
       # filter(status_id %in% TDPC0$RID)
     if(sort==2)
     TFSS <-
-      fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv") %>%
+      fread("https://raw.githubusercontent.com/syamada93/RTweet_2022_HR/master/Tweet_word_RmeCab.tsv",encoding = "UTF-8") %>%
       # FSS %>%
       # filter(Purl %in% TDPC0$Purl)
       filter(status_id %in% TDPC0$RID)
