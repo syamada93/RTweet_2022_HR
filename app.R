@@ -74,7 +74,7 @@ ui <- fluidPage(
       h4(column(2,
                 radioButtons(inputId = "sort",
                              label = "画像順序",
-                             choices = c("出現頻度"=1,"最新投稿"=2),
+                             choices = c("出現頻度"=1,"最新投稿（オリジナルツイート）"=2),
                              selected = 1,
                              inline = T))),
       br(),
@@ -105,7 +105,7 @@ ui <- fluidPage(
 
 #SERVER####
 server <- function(input, output) {
-  refreshPlot0 <- reactiveTimer(intervalMs = 120000)
+  refreshPlot0 <- reactiveTimer(intervalMs = 60000*5)
   
   # wd="大雨"
   sort=2
@@ -131,7 +131,7 @@ server <- function(input, output) {
         mutate(Rank=frank(-n,ties.method = "max")) %>%
         arrange(Rank,desc(nf),desc(nr),RID) %>%
         filter(Rank<=20|n==max(n)) %>%
-        filter(RID %in% unique(RID)[1:20]) %>%
+        filter(RID %in% unique(RID)[1:16]) %>%
         ungroup()
     }
     
@@ -143,7 +143,7 @@ server <- function(input, output) {
         filter(!grepl("^@",text)) %>%
         mutate(Rank=frank(-n,ties.method = "max")) %>%
         arrange(desc(RTime),Rank,desc(nf),desc(nr),RID) %>%
-        filter(RID %in% unique(RID)[1:20]) %>%
+        filter(RID %in% unique(RID)[1:16]) %>%
         ungroup()
     }
     
