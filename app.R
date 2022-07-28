@@ -71,7 +71,7 @@ ui <- fluidPage(
   # Sidebar with a slider input for number of bins 
   fluidRow(
     sidebarPanel(
-      h4(column(2,
+      h4(column(3,
                 radioButtons(inputId = "sort",
                              label = "画像順序",
                              choices = c("出現頻度"=1,"最新投稿（オリジナルツイート）"=2),
