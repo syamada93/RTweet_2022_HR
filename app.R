@@ -208,7 +208,7 @@ server <- function(input, output) {
         hover$x=hover$x*co
         hover$y=hover$y*ro
         w=which(hover$x>XY$sx&hover$x<XY$lx&hover$y<XY$sy&hover$y>XY$ly)
-        paste(TDPCS$RTime[w],paste0(TDPCS$n[w],"ツイート"),paste0(TDPCS$nf[w],"いいね"),TDPCS$text[w])
+        paste(TDPCS$RTime[w],paste0(TDPCS$n[w],"ツイート"),TDPCS$text[w])
       }
     })
     
