@@ -131,7 +131,7 @@ server <- function(input, output) {
         mutate(Rank=frank(-n,ties.method = "max")) %>%
         arrange(Rank,desc(nf),desc(nr),RID) %>%
         filter(Rank<=20|n==max(n)) %>%
-        filter(RID %in% unique(RID)[1:16]) %>%
+        filter(RID %in% unique(RID)[1:20]) %>%
         ungroup()
     }
     
@@ -143,7 +143,7 @@ server <- function(input, output) {
         filter(!grepl("^@",text)) %>%
         mutate(Rank=frank(-n,ties.method = "max")) %>%
         arrange(desc(RTime),Rank,desc(nf),desc(nr),RID) %>%
-        filter(RID %in% unique(RID)[1:16]) %>%
+        filter(RID %in% unique(RID)[1:20]) %>%
         ungroup()
     }
     
